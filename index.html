@@ -15,58 +15,29 @@
     }
 
     body {
-      background: #f4f6fb;
-      height: 100vh;
-      overflow-x: hidden;
+      background: transparent; /* ✅ no white background */
+      overflow: hidden; /* ✅ no scrollbars in iframe */
     }
 
-    /* Floating Button */
     .toggle-btn {
-      position: fixed;
-      bottom: 25px;
-      right: 25px;
-      width: 65px;
-      height: 65px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, #7AD67A, #37C2A0);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      color: white;
-      font-size: 28px;
-      border: none;
-      cursor: pointer;
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
-      transition: transform 0.3s ease;
-      z-index: 1000;
+      display: none; /* ✅ hide toggle icon */
     }
 
-    .toggle-btn:active { transform: scale(0.95); }
-
-    /* Chat Box */
     .chat-container {
       position: fixed;
-      bottom: 100px;
-      right: 25px;
-      width: 95%;
-      max-width: 380px;
-      height: 75vh;
+      bottom: 0;
+      right: 0;
+      width: 360px;
+      height: 500px;
       background: #fff;
       border-radius: 15px;
       box-shadow: 0 10px 30px rgba(0,0,0,0.2);
       display: flex;
       flex-direction: column;
       overflow: hidden;
-      opacity: 0;
-      pointer-events: none;
-      transform: translateY(20px);
-      transition: all 0.3s ease;
       z-index: 999;
-    }
-
-    .chat-container.active {
       opacity: 1;
-      transform: translateY(0);
+      transform: none;
       pointer-events: all;
     }
 
@@ -87,11 +58,7 @@
     }
 
     .close-btn {
-      background: none;
-      border: none;
-      color: white;
-      font-size: 1.2rem;
-      cursor: pointer;
+      display: none; /* ✅ no close button */
     }
 
     .messages-container {
@@ -110,12 +77,6 @@
       border-radius: 15px;
       font-size: 0.9rem;
       word-wrap: break-word;
-      animation: fadeIn 0.3s ease;
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(5px); }
-      to { opacity: 1; transform: translateY(0); }
     }
 
     .bot-message {
@@ -151,8 +112,6 @@
       font-size: 1rem;
     }
 
-    .message-input:focus { border-color: #37C2A0; }
-
     .send-btn {
       background: linear-gradient(135deg, #7AD67A, #37C2A0);
       border: none;
@@ -185,33 +144,21 @@
       animation: typing 1.4s infinite ease-in-out;
     }
 
-    .typing-dot:nth-child(1) { animation-delay: -0.32s; }
-    .typing-dot:nth-child(2) { animation-delay: -0.16s; }
-
     @keyframes typing {
       0%, 80%, 100% { transform: scale(0.8); opacity: 0.5; }
       40% { transform: scale(1); opacity: 1; }
     }
 
     ::-webkit-scrollbar { width: 6px; }
-    ::-webkit-scrollbar-thumb {
-      background: #37C2A0;
-      border-radius: 3px;
-    }
+    ::-webkit-scrollbar-thumb { background: #37C2A0; border-radius: 3px; }
   </style>
 </head>
 
 <body>
-  <!-- Chat Toggle -->
-  <button class="toggle-btn" id="toggleChat">
-    <i class="fas fa-crown"></i>
-  </button>
-
-  <!-- Chat Window -->
+  <!-- Chat Window Only -->
   <div class="chat-container" id="chatContainer">
     <div class="chat-header">
       <h3><i class="fas fa-robot"></i> VAA Assistant</h3>
-      <button class="close-btn" id="closeChat"><i class="fas fa-times"></i></button>
     </div>
 
     <div class="messages-container" id="messagesContainer">
@@ -230,42 +177,26 @@
     const SESSION_ID = "6901a882e26dd0e036848c05-evuz3e1t18c";
     const LYZR_API_URL = "https://agent-prod.studio.lyzr.ai/v3/inference/chat/";
 
-    const toggleBtn = document.getElementById('toggleChat');
-    const chatContainer = document.getElementById('chatContainer');
-    const closeBtn = document.getElementById('closeChat');
     const messagesContainer = document.getElementById('messagesContainer');
     const userInput = document.getElementById('userInput');
     const sendBtn = document.getElementById('sendMessage');
 
-    toggleBtn.addEventListener('click', () => chatContainer.classList.toggle('active'));
-    closeBtn.addEventListener('click', () => chatContainer.classList.remove('active'));
-
-    // ✅ Enhanced addMessage function with formatting
     function addMessage(text, sender) {
       const msg = document.createElement('div');
       msg.classList.add('message', `${sender}-message`);
-
-      let formatted = text
-        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')  // Bold
-        .replace(/\*(.*?)\*/g, '<em>$1</em>')              // Italic
-        .replace(/\n/g, '<br>');                           // Line breaks
-
-      msg.innerHTML = formatted;
+      msg.innerHTML = text.replace(/\n/g, '<br>');
       messagesContainer.appendChild(msg);
       messagesContainer.scrollTop = messagesContainer.scrollHeight;
-      return msg;
     }
 
     function showTyping(text = "Thinking...") {
       const typingDiv = document.createElement('div');
       typingDiv.classList.add('typing-indicator');
       typingDiv.id = 'typing';
-      typingDiv.innerHTML = `
-        <span>${text}</span>
+      typingDiv.innerHTML = `<span>${text}</span>
         <div class="typing-dot"></div>
         <div class="typing-dot"></div>
-        <div class="typing-dot"></div>
-      `;
+        <div class="typing-dot"></div>`;
       messagesContainer.appendChild(typingDiv);
       messagesContainer.scrollTop = messagesContainer.scrollHeight;
     }
@@ -286,7 +217,7 @@
         user_id: "vaa-user@test.com",
         agent_id: AGENT_ID,
         session_id: SESSION_ID,
-        message: message
+        message
       };
 
       try {
@@ -300,43 +231,17 @@
         });
 
         const data = await res.json();
-        const botResponse = data.response || "🤖 Sorry, I didn’t catch that.";
         removeTyping();
-
-        showTyping("Thinking...");
-        setTimeout(() => {
-          removeTyping();
-          typeMessage(botResponse, 'bot');
-        }, 2000);
-
+        addMessage(data.response || "🤖 Sorry, I didn’t catch that.", 'bot');
       } catch {
         removeTyping();
         addMessage("⚠️ Connection error. Please try again.", 'bot');
       }
     }
 
-    // Typing effect (word-by-word with formatting)
-    function typeMessage(text, sender) {
-      const msg = addMessage("", sender);
-      const words = text.split(" ");
-      let i = 0;
-      const interval = setInterval(() => {
-        let nextWord = words[i] || "";
-        let formatted = nextWord
-          .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-          .replace(/\*(.*?)\*/g, '<em>$1</em>')
-          .replace(/\n/g, '<br>');
-        msg.innerHTML += (i > 0 ? " " : "") + formatted;
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
-        i++;
-        if (i >= words.length) clearInterval(interval);
-      }, 80); // typing speed
-    }
-
     sendBtn.addEventListener('click', sendMessage);
     userInput.addEventListener('keypress', e => {
-      if (e.key === 'Enter') sendMessage();
-    });
+      if (e.key === 'Enter') sendMessage());
   </script>
 </body>
 </html>
